@@ -1,7 +1,9 @@
 import React from "react";
 import { useParams } from "react-router-dom";
+import { useQuery, gql } from '@apollo/client'
+import ReactMarkdown from 'react-markdown'
 
-import useFetch from "../hooks/useFetch";
+// import useFetch from "../hooks/useFetch";
 
 import {
   Typography,
@@ -9,21 +11,46 @@ import {
   CircularProgress,
   Card,
   CardContent,
-  CardActions,
-  Button,
+  Stack
 } from "@mui/material";
+
+const REVIEW = gql`
+query GetReview($id: ID!) {
+  review(id: $id) {
+    data {
+      id,
+      attributes {
+        title,
+        rating,
+        body
+        categories {
+          data {
+            id
+            attributes {
+              name
+            }
+          }
+        }
+      }
+    }
+  }
+}
+`
 
 const ReviewDetails = () => {
   const { id } = useParams();
-  const {
-    loading,
-    error,
-    data: review,
-  } = useFetch(`http://localhost:1337/api/reviews/${id}`);
-  console.log(
-    "🚀 ~ file: ReviewDetails.js ~ line 11 ~ ReviewDetails ~ review",
-    review
-  );
+  const { loading, error, data } = useQuery(REVIEW, {
+    variables: {
+      id: id
+    }
+  })
+
+  // const {
+  //   loading,
+  //   error,
+  //   data: review,
+  // } = useFetch(`http://localhost:1337/api/reviews/${id}`);
+
   if (loading)
     return (
       <Typography>
@@ -39,9 +66,9 @@ const ReviewDetails = () => {
     );
 
   return (
-    <Container sx={{ pt: 15 }}>
+    <Container>
       <Card
-        key={review?.id}
+        key={data?.review?.data?.id}
         variant="outlined"
         sx={{ mb: 10, padding: "10px 30px", overflow: "visible" }}
       >
@@ -59,11 +86,17 @@ const ReviewDetails = () => {
               color: "white",
             }}
           >
-            {review?.data?.attributes?.rating}
+            {data?.review?.data?.attributes?.rating}
           </Typography>
-          <Typography variant="h2">{review?.data?.attributes?.title}</Typography>
-          <Typography sx={{ mb: 2, mt: 2, color: "gray" }}>console.list</Typography>
-          <Typography>{review?.data?.attributes?.body}...</Typography>
+          <Typography variant="h2">{data?.review?.data?.attributes?.title}</Typography>
+          <Stack direction="row" spacing={1} mb={2.5} mt={1}>
+              {data?.review?.data?.attributes?.categories?.data?.map((c) => (
+                <Typography key={c.id} variant="caption">
+                  {c?.attributes?.name}
+                </Typography>
+              ))}
+            </Stack>
+          <ReactMarkdown>{data?.review?.data?.attributes?.body}</ReactMarkdown>
         </CardContent>
       </Card>
     </Container>

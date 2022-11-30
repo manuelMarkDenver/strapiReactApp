@@ -1,5 +1,8 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link as NavLink } from "react-router-dom";
+import { useQuery, gql } from "@apollo/client";
+
+import Link from "@mui/material/Link";
 import PropTypes from "prop-types";
 import AppBar from "@mui/material/AppBar";
 import Container from "@mui/material/Container";
@@ -15,19 +18,54 @@ import MenuIcon from "@mui/icons-material/Menu";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
+import CircularProgress from "@mui/material/CircularProgress";
+import Stack from "@mui/material/Stack";
+import Paper from "@mui/material/Paper";
+
+import { styled } from "@mui/material/styles";
 
 const drawerWidth = 240;
 const navItems = [
-  <Link to="/" style={{ textDecoration: "none" }}>
+  <NavLink to="/" style={{ textDecoration: "none" }}>
     <Typography sx={{ color: { xs: "violet", md: "#fff" } }}>
       Ninja Reviews
     </Typography>
-  </Link>,
+  </NavLink>,
 ];
+
+const Item = styled(Paper)(({ theme }) => ({
+  backgroundColor: theme.palette.mode === "dark" ? "#1A2027" : "#fff",
+  ...theme.typography.body2,
+  padding: theme.spacing(1),
+  textAlign: "center",
+  color: theme.palette.text.secondary,
+}));
+
+const CATEGORIES = gql`
+  query GetCategories {
+    categories {
+      data {
+        id
+        attributes {
+          name
+        }
+      }
+    }
+  }
+`;
 
 const SiteHeader = (props) => {
   const { window } = props;
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  const { loading, error, data } = useQuery(CATEGORIES);
+ 
+  if (error)
+    return (
+      <Typography sx={{ p: 10, color: "red" }}>
+        Error: {error?.message}
+      </Typography>
+    );
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
@@ -106,15 +144,32 @@ const SiteHeader = (props) => {
         </Box>
       </Box>
       <Container sx={{ mt: 5, mb: 5 }}>
-        <Link to="/" style={{ textDecoration: "none" }}>
+        <NavLink to="/" style={{ textDecoration: "none" }}>
           <Typography variant="h2" sx={{ color: "#8E2AD6", fontSize: "3em" }}>
             Ninja Reviews
           </Typography>
-        </Link>
-        <Divider
-          variant="fullWidth"
-          sx={{ color: "#8E2AD6" }}
-        />
+        </NavLink>
+        <Divider variant="fullWidth" sx={{ color: "#8E2AD6" }} />
+
+        <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
+          <Stack
+            direction="row"
+            divider={<Divider orientation="vertical" flexItem />}
+            spacing={3}
+            mt={2}
+          >
+            <Typography>Filter reviews by category:</Typography>
+            {data?.categories?.data.map((category) => (
+              <NavLink
+                key={category.id}
+                to={`/category/${category.id}`}
+                style={{ textDecorationColor: "purple", textDecorationThickness: "3px" }}
+              >
+                {category?.attributes?.name}
+              </NavLink>
+            ))}
+          </Stack>
+        </Box>
       </Container>
     </>
   );

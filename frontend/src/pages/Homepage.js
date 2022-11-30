@@ -1,5 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import { useQuery, gql } from "@apollo/client";
+import ReactMarkdown from "react-markdown";
 
 import {
   Typography,
@@ -9,14 +11,41 @@ import {
   CardActions,
   Button,
   CircularProgress,
+  Stack,
 } from "@mui/material";
 
-import useFetch from "../hooks/useFetch";
+// graphql query
+
+const REVIEWS = gql`
+  query GetReviews {
+    reviews {
+      data {
+        id
+        attributes {
+          title
+          rating
+          body
+          categories {
+            data {
+              id
+              attributes {
+                name
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+`;
 
 const Homepage = () => {
-  const url = "http://localhost:1337/api/reviews";
+  // const url = "http://localhost:1337/api/reviews";
 
-  const { loading, error, data: reviews } = useFetch(url);
+  // const { loading, error, data: reviews } = useFetch(url);
+
+  // graphql
+  const { loading, error, data } = useQuery(REVIEWS);
   if (loading)
     return (
       <Typography>
@@ -32,8 +61,8 @@ const Homepage = () => {
     );
 
   return (
-    <Container sx={{ pt: 10, pb: 10, pl: 5, pr: 5 }}>
-      {reviews?.data?.map((review) => (
+    <Container sx={{ pb: 10, pl: 5, pr: 5 }}>
+      {data?.reviews?.data?.map((review) => (
         <Card
           key={review.id}
           variant="outlined"
@@ -56,12 +85,17 @@ const Homepage = () => {
               {review?.attributes?.rating}
             </Typography>
             <Typography variant="h2">{review?.attributes?.title}</Typography>
-            <Typography>console.list</Typography>
-            <Typography>
-              {review?.attributes?.body.substring(0, 200)}...
-            </Typography>
+            <Stack direction="row" spacing={1} mb={2.5}>
+              {review?.attributes?.categories?.data?.map((c) => (
+                <Typography key={c.id} variant="caption">
+                  {c?.attributes?.name}
+                </Typography>
+              ))}
+            </Stack>
+            <ReactMarkdown children={review?.attributes?.body.substring(0, 200)}/>
+              
           </CardContent>
-          <CardActions sx={{ pl: 12 }}>
+          <CardActions sx={{ pl: 8 }}>
             <Button>
               <Link to={`details/${review.id}`}>Read More</Link>
             </Button>
