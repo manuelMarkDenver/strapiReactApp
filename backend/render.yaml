@@ -3,7 +3,7 @@ services:
     name: strapi
     env: node
     plan: free
-    rootDir: ./backend
+    rootDir: backend
     buildCommand: yarn install && yarn build
     startCommand: rsync -a public/ /data/public/ && yarn start
     healthCheckPath: /_health
@@ -25,26 +25,3 @@ services:
         generateValue: true
       - key: APP_KEYS
         generateValue: true
- # A static site
-  - type: web
-    name: reactStrapi
-    env: static
-    buildCommand: yarn build
-    staticPublishPath: ./frontend/build
-    pullRequestPreviewsEnabled: true # optional
-    buildFilter:
-      paths:
-      - src/**/*.js
-      ignoredPaths:
-      - src/**/*.test.js
-    headers:
-      - path: /*
-        name: X-Frame-Options
-        value: sameorigin
-    routes:
-      - type: redirect
-        source: /old
-        destination: /new
-      - type: rewrite
-        source: /a/*
-        destination: /a
